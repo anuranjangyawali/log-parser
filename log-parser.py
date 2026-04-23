@@ -3,10 +3,23 @@
 import re
 import json
 import jq
+import argparse
 
-def main():
+parser = argparse.ArgumentParser(
+        description=("A commandline utility that parses syslogd logs." 
+                     "It produces two \'.json\' files \'errors.json\' and \'parsed-logs.json\'." 
+                     "The files contain json object list of parsed logs and json object" 
+                     "list of parsed logs with erros respectively.")
+        )
+
+parser.add_argument("--source", "-s", help="path to your syslog file", type=str, default="/var/log/syslog")
+
+args = parser.parse_args() 
+source = args.source
+
+def logparser():
+    syslog = source
     logfile = '/home/zen/parsed-log.json'
-    syslog = '/var/log/syslog'
     errorsFile = '/home/zen/errors.json'
 
     # Regex:
@@ -28,7 +41,7 @@ def main():
     with open(syslog, 'r', encoding="utf-8") as syslg:
         for line in syslg:
             reggy = reobj.search(line)
-
+            
             if not reggy:
                 continue
 
@@ -49,8 +62,10 @@ def main():
     with open(errorsFile, 'w+', encoding="utf-8") as errf:
         json.dump(errors, errf, indent=4)
 
-if __name__ == '__main__':
-    main()
+logparser()
+
+#if __name__ == '__main__':
+#    logparser()
 
 
 
