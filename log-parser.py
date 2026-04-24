@@ -5,22 +5,26 @@ import json
 import jq
 import argparse
 
+logFile = '/home/zen/parsed-log.json'
+errorsFile = '/home/zen/errors.json'
+
 parser = argparse.ArgumentParser(
         description=("A commandline utility that parses syslogd logs." 
                      "It produces two \'.json\' files \'errors.json\' and \'parsed-logs.json\'." 
                      "The files contain json object list of parsed logs and json object" 
-                     "list of parsed logs with erros respectively.")
+                     "list of parsed logs with erros respectively."),
+        prog="logparser"
         )
 
-parser.add_argument("--source", "-s", help="path to your syslog file", type=str, default="/var/log/syslog")
-
+parser.add_argument("source", nargs="?" , help="path to your syslog file", type=str , default="/var/log/syslog")
+parser.add_argument("--search","-s", nargs=1, help="outputs error messages of given program name")
 args = parser.parse_args() 
-source = args.source
 
-def logparser():
+source = args.source
+searchProgram = args.search
+
+def logParser():
     syslog = source
-    logfile = '/home/zen/parsed-log.json'
-    errorsFile = '/home/zen/errors.json'
 
     # Regex:
     # 1 = timestamp
@@ -56,14 +60,27 @@ def logparser():
 
     errors = jq.compile('.[] | select( .Message | test("error"; "i"))').input(parsed_logs).all()
 
-    with open(logfile, 'w+', encoding="utf-8") as pars:
+    with open(logFile, 'w+', encoding="utf-8") as pars:
         json.dump(parsed_logs, pars, indent=4)
     
     with open(errorsFile, 'w+', encoding="utf-8") as errf:
         json.dump(errors, errf, indent=4)
 
-logparser()
+    print(json.dumps(parsed_logs))
 
+#logParser()
+
+def logSearch():
+
+    with open(errorsFile, "r", encoding="utf-8") as errs2:
+        errors2 = json.load(errs2)
+    messages = jq.compile('.[] | select ( .Program | test($program; "i"))', args={"program": searchProgram[0] })\
+            .input(errors2).all()
+    print(json.dumps(messages))
+
+logSearch()
+
+                
 #if __name__ == '__main__':
 #    logparser()
 
