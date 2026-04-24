@@ -5,8 +5,8 @@ import json
 import jq
 import argparse
 
-logFile = '/home/zen/parsed-log.json'
-errorsFile = '/home/zen/errors.json'
+logFile = './parsed-log.json'
+errorsFile = './errors.json'
 
 parser = argparse.ArgumentParser(
         description=("A commandline utility that parses syslogd logs." 
@@ -68,7 +68,7 @@ def logParser():
 
     print(json.dumps(parsed_logs))
 
-#logParser()
+logParser()
 
 def logSearch():
 
@@ -78,7 +78,7 @@ def logSearch():
             .input(errors2).all()
     print(json.dumps(messages))
 
-logSearch()
+#logSearch()
 
                 
 #if __name__ == '__main__':
