@@ -2,8 +2,8 @@
 
 import re
 import json
-import jq
 import argparse
+import jq
 
 logFile = './parsed-log.json'
 errorsFile = './errors.json'
@@ -58,28 +58,43 @@ def logParser():
                 'Message': reggy.group(5)
                 })
 
-    errors = jq.compile('.[] | select( .Message | test("error"; "i"))').input(parsed_logs).all()
+    error_logs = []
 
+    for logs in parsed_logs:
+        for k,v in logs.items():
+            if v == None: continue
+            if "error" in v.lower(): error_logs.append(logs)
+
+    return ( parsed_logs, error_logs )
+
+
+def writeToFile():
+    gLogs = logParser()
     with open(logFile, 'w+', encoding="utf-8") as pars:
-        json.dump(parsed_logs, pars, indent=4)
+        json.dump(gLogs[0], pars, indent=4)
     
     with open(errorsFile, 'w+', encoding="utf-8") as errf:
-        json.dump(errors, errf, indent=4)
-
-    print(json.dumps(parsed_logs))
+        json.dump(gLogs[1], errf, indent=4)
 
 
 def logSearch():
-
     with open(errorsFile, "r", encoding="utf-8") as errs2:
         errors2 = json.load(errs2)
     messages = jq.compile('.[] | select ( .Program | test($program; "i"))', args={"program": searchProgram[0] })\
             .input(errors2).all()
     print(json.dumps(messages))
 
+def printLogs():
+    gLogs = logParser()
+    print(json.dumps(gLogs[0]))
+
+def printErrLogs():
+    gLogs = logParser()
+    print(json.dumps(gLogs[1]))
 
 if searchProgram: 
     logParser()
     logSearch()
 else:
-    logParser()
+    printLogs()
+    writeToFile()
