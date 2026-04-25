@@ -23,6 +23,7 @@ args = parser.parse_args()
 source = args.source
 searchProgram = args.search
 
+
 def logParser():
     syslog = source
 
@@ -57,7 +58,6 @@ def logParser():
                 'Message': reggy.group(5)
                 })
 
-
     errors = jq.compile('.[] | select( .Message | test("error"; "i"))').input(parsed_logs).all()
 
     with open(logFile, 'w+', encoding="utf-8") as pars:
@@ -68,7 +68,6 @@ def logParser():
 
     print(json.dumps(parsed_logs))
 
-logParser()
 
 def logSearch():
 
@@ -78,12 +77,9 @@ def logSearch():
             .input(errors2).all()
     print(json.dumps(messages))
 
-#logSearch()
 
-                
-#if __name__ == '__main__':
-#    logparser()
-
-
-
-
+if searchProgram: 
+    logParser()
+    logSearch()
+else:
+    logParser()
