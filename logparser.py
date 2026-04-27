@@ -3,35 +3,19 @@
 import re
 import json
 import argparse
-
-logFile = './parsed-log.json'
-errorsFile = './errors.json'
-
-parser = argparse.ArgumentParser(
-        description=("A commandline utility that parses syslogd logs. " 
-                     "It produces two \'.json\' files \'errors.json\' and \'parsed-logs.json\'. " 
-                     "The files contain json object list of parsed logs and json object" 
-                     "list of parsed logs with erros respectively."),
-        prog="logparser"
-        )
-
-parser.add_argument("source", nargs="?" , help="path to your syslog file", type=str , default="/var/log/syslog")
-parser.add_argument("--search","-s", nargs=1, help="outputs error messages of given program name")
-args = parser.parse_args() 
-
-source = args.source
-searchProgram = args.search
-
+import sys
 
 # Regex: 1 = timestamp, 2 = hostname, 3 = program, 4 = PID (optional), 5 = message
-def logParser():
+
+
+def log_parser():
     reobj = re.compile(
         r"(^[a-z]{3}\s+[0-9]+\s+[0-9:]+)"
         r"\s+([a-z0-9-]+)\s+([a-z0-9_.-]+)"
         r"(?:\[(\d+)])?:\s+(.*)$",
         re.I
     )
-    with open(source, 'r', encoding="utf-8") as syslg:
+    with open(args.source, 'r', encoding="utf-8") as syslg:
         parsed_logs = []
         for line in syslg:
             reggy = reobj.search(line)
@@ -49,39 +33,54 @@ def logParser():
             for k,v in logs.items():
                 if v == None: continue
                 if "error" in v.lower(): error_logs.append(logs)
-    return ( parsed_logs, error_logs )
+    return (parsed_logs, error_logs)
 
 
-def writeToFile():
-    gLogs = logParser()
-    with open(logFile, 'w+', encoding="utf-8") as pars:
-        json.dump(gLogs[0], pars, indent=4)
-    with open(errorsFile, 'w+', encoding="utf-8") as errf:
-        json.dump(gLogs[1], errf, indent=4)
+def write_to_file():
+    get_logs = log_parser()
+    with open(log_file, 'w+', encoding="utf-8") as pars:
+        json.dump(get_logs[0], pars, indent=4)
+    with open(errors_file, 'w+', encoding="utf-8") as errf:
+        json.dump(get_logs[1], errf, indent=4)
 
 
-def logSearch():
-    eLogs = logParser()
-    pErrorLogs = []
-    for logs in eLogs[1]:
-        if logs["Program"].lower() == searchProgram[0].lower():
-            pErrorLogs.append(logs)
-    print(json.dumps(pErrorLogs))
+def log_search():
+    error_logs = log_parser()
+    program_error_logs = []
+    for logs in error_logs[1]:
+        if logs["Program"].lower() == args.program.lower():
+            program_error_logs.append(logs)
+    print(json.dumps(program_error_logs))
 
 
-def printLogs():
-    gLogs = logParser()
-    print(json.dumps(gLogs[0]))
+def print_logs():
+    get_logs = log_parser()
+    print(json.dumps(get_logs[0]))
 
 
-def printErrLogs():
-    gLogs = logParser()
-    print(json.dumps(gLogs[1]))
+def print_err_logs():
+    get_logs = log_parser()
+    print(json.dumps(get_logs[1]))
 
 
 if __name__ == "__main__":
-    if searchProgram: 
-        logSearch()
-    else: 
-        printLogs()
+    log_file = './parsed-log.json'
+    errors_file = './errors.json'
+
+    parser = argparse.ArgumentParser(
+            description=("A commandline utility that parses syslogd logs. " 
+                         "It produces two \'.json\' files \'errors.json\' and \'parsed-logs.json\'. " 
+                         "The files contain json object list of parsed logs and json object" 
+                         "list of parsed logs with erros respectively."),
+            prog="logparser"
+            )
+
+    parser.add_argument("source", nargs="?" , help="path to your syslog file", type=str , default="/var/log/syslog")
+    parser.add_argument("--search","-s", help="outputs error messages of given program name", dest='program')
+    parser.add_argument("--error","-e", action="store_true", help="outputs all error messages", dest='isset')
+    args = parser.parse_args() 
+
+    if args.program: log_search()
+    elif args.isset: print_err_logs()
+    else: print_logs()
 
