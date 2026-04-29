@@ -4,6 +4,7 @@ import re
 import json
 import argparse
 import os
+import sys
 
 def arg_parse():
     parser = argparse.ArgumentParser(
@@ -35,24 +36,28 @@ def log_parser():
         r"(?:\[(\d+)])?:\s+(.*)$",
         re.I
     )
-    with open(args.source, 'r', encoding="utf-8") as syslg:
-        parsed_logs = []
-        for line in syslg:
-            reggy = reobj.search(line)
-            if not reggy:
-                continue
-            parsed_logs.append({
-                'Timestamp': reggy.group(1),
-                'Hostname': reggy.group(2),
-                'Program': reggy.group(3),
-                'PID': reggy.group(4),
-                'Message': reggy.group(5)
-                })
-        error_logs = []
-        for logs in parsed_logs:
-            for k,v in logs.items():
-                if v == None: continue
-                if "error" in v.lower(): error_logs.append(logs)
+    try:
+        with open(args.source, 'r', encoding="utf-8") as syslg:
+            parsed_logs = []
+            for line in syslg:
+                reggy = reobj.search(line)
+                if not reggy:
+                    continue
+                parsed_logs.append({
+                    'Timestamp': reggy.group(1),
+                    'Hostname': reggy.group(2),
+                    'Program': reggy.group(3),
+                    'PID': reggy.group(4),
+                    'Message': reggy.group(5)
+                    })
+            error_logs = []
+            for logs in parsed_logs:
+                for k,v in logs.items():
+                    if v == None: continue
+                    if "error" in v.lower(): error_logs.append(logs)
+    except FileNotFoundError:
+        print(f"File `{args.source}` not found.")
+        sys.exit(1)
 
     return (parsed_logs, error_logs)
 
@@ -62,10 +67,8 @@ def write_to_file(path):
     err_file = "errors.json"
 
     if os.path.isdir(path):
-        print(path)
         log_file = f"{path}/{log_file}"
         err_file = f"{path}/{err_file}"
-        print(log_file)
 
     get_logs = log_parser()
     with open(log_file, "w+", encoding="utf-8") as pars:
