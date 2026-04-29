@@ -59,14 +59,13 @@ def log_parser():
 
 def write_to_file(path):
     log_file = "logs.json"
-    err_file = "erros.json"
+    err_file = "errors.json"
 
-    if not os.path.isdir(path):
-        log_file = path.__add__(log_file)
-        err_file = path.__add__(err_file)
-    elif os.path.isdir(path):
-        log_file = path.__add__('/' + log_file)
-        err_file = path.__add__('/' + err_file)
+    if os.path.isdir(path):
+        print(path)
+        log_file = f"{path}/{log_file}"
+        err_file = f"{path}/{err_file}"
+        print(log_file)
 
     get_logs = log_parser()
     with open(log_file, "w+", encoding="utf-8") as pars:
