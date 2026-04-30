@@ -16,7 +16,7 @@ def arg_parse():
             )
 
     parser.add_argument("source", nargs="?" , help="Syslog file path", type=str , default="/var/log/syslog")
-    parser.add_argument("--error", "-e", help="output error logs only", action="store_true", dest='isset_e')
+    parser.add_argument("--error", "-e", help="output error logs only", action="store_true", dest='perrs')
     parser.add_argument("--find", "-f", help="output error logs of a specific program only", dest='program')
     parser.add_argument("--output", "-o", help="write logs to the specified directory", nargs='?',\
             const="./", dest='path')
@@ -51,22 +51,31 @@ def log_parser(source):
                     'Message': reggy.group(5)
                     })
     except FileNotFoundError:
-        print(f"File `{args.source}` not found.")
+        print(f"File `{source}` not found.")
         sys.exit(1)
     except PermissionError:
-        print(f"File `{args.source}` is not readable.")
+        print(f"File `{source}` is not readable.")
         sys.exit(1)
 
     return parsed_logs
 
-def filter_logs(parsed_logs):
-    error_logs = []
-    for logs in parsed_logs:
-        if "error" in logs["Message"].lower():
-            error_logs.append(logs)
+
+def all_errors(parsed_logs):
+    error_logs = [errors for errors in parsed_logs if "error" in errors["Message"].lower()]
     return error_logs
 
-def write_to_file(path, logs, errors):
+
+def prog_logs(parsed_logs, program):
+    logs = [logs for logs in parsed_logs if logs["Program"].lower() == program.lower()]
+    return logs
+
+
+def prog_errors(error_logs, program):
+    prog_error_logs = [p_e_l for p_e_l in error_logs if p_e_l["Program"].lower() == program]
+    return prog_error_logs
+
+
+def write_to_file(path, parsed_logs, error_logs): 
     log_file = "logs.json"
     err_file = "errors.json"
 
@@ -75,9 +84,9 @@ def write_to_file(path, logs, errors):
             log_file = f"{path}/{log_file}"
             err_file = f"{path}/{err_file}"
             with open(log_file, "w+", encoding="utf-8") as pars:
-                json.dump(logs, pars, indent=4)
+                json.dump(parsed_logs, pars, indent=4)
             with open(err_file, "w+", encoding="utf-8") as errf:
-                json.dump(errors, errf, indent=4)
+                json.dump(error_logs, errf, indent=4)
         else:
             print(f"{path} is not a directory")
     except PermissionError:
@@ -85,39 +94,26 @@ def write_to_file(path, logs, errors):
         sys.exit(1)
 
 
-def log_search(error_logs, program):
-    program_error_logs = []
-    for logs in error_logs:
-        if logs["Program"].lower() == program.lower():
-            program_error_logs.append(logs)
-    return program_error_logs
-
-
-def print_logs():
-    logs = log_parser()
+def print_logs(logs):
     print(json.dumps(logs, indent=4))
-
-
-def print_err_logs(errors):
-    print(json.dumps(errors, indent=4))
 
 
 if __name__ == "__main__":
     args = arg_parse()
-
-    logs = log_parser(args.source)
-    errors = filter_logs(logs)
+   
+    parsed_logs = log_parser(args.source)
+    error_logs = all_errors(parsed_logs) 
 
     if args.program: 
-        program_error_logs = log_search(errors, args.program)
-        print(json.dumps(program_error_logs, indent=4))
+        prog_error_logs = prog_errors(error_logs, args.program)
+        print_logs(prog_error_logs)
 
-    elif args.isset_e: 
-        print_err_logs(errors)
+    elif args.path:
+        write_to_file(args.path, parsed_logs, error_logs)
 
-    elif args.path: 
-        write_to_file(args.path, logs, errors)
+    elif args.perrs:
+        print_logs(error_logs)
 
-    else: 
-        print_logs()
+    else:
+        print_logs(parsed_logs)
 
