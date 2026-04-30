@@ -29,7 +29,7 @@ def arg_parse():
 # Regex: 1 = timestamp, 2 = hostname, 3 = program, 4 = PID (optional), 5 = message
 
 
-def log_parser():
+def log_parser(source):
     reobj = re.compile(
         r"(^[a-z]{3}\s+[0-9]+\s+[0-9:]+)"
         r"\s+([a-z0-9-]+)\s+([a-z0-9_.-]+)"
@@ -37,7 +37,7 @@ def log_parser():
         re.I
     )
     try:
-        with open(args.source, 'r', encoding="utf-8") as syslg:
+        with open(source, 'r', encoding="utf-8") as syslg:
             parsed_logs = []
             for line in syslg:
                 reggy = reobj.search(line)
@@ -61,9 +61,8 @@ def log_parser():
 def filter_logs(parsed_logs):
     error_logs = []
     for logs in parsed_logs:
-        for k,v in logs.items():
-            if v == None: continue
-            if "error" in v.lower(): error_logs.append(logs)
+        if "error" in logs["Message"].lower():
+            error_logs.append(logs)
     return error_logs
 
 def write_to_file(path, logs, errors):
@@ -105,7 +104,7 @@ def print_err_logs(errors):
 if __name__ == "__main__":
     args = arg_parse()
 
-    logs = log_parser()
+    logs = log_parser(args.source)
     errors = filter_logs(logs)
 
     if args.program: 
