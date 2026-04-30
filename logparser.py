@@ -53,6 +53,8 @@ def log_parser():
     except FileNotFoundError:
         print(f"File `{args.source}` not found.")
         sys.exit(1)
+    except PermissionError:
+        print(f"File `{args.source}` is not readable.")
 
     return parsed_logs
 
@@ -68,15 +70,19 @@ def write_to_file(path, logs, errors):
     log_file = "logs.json"
     err_file = "errors.json"
 
-    if os.path.isdir(path):
-        log_file = f"{path}/{log_file}"
-        err_file = f"{path}/{err_file}"
-
-    with open(log_file, "w+", encoding="utf-8") as pars:
-        json.dump(logs, pars, indent=4)
-    with open(err_file, "w+", encoding="utf-8") as errf:
-        json.dump(errors, errf, indent=4)
-
+    try:
+        if os.path.isdir(path):
+            log_file = f"{path}/{log_file}"
+            err_file = f"{path}/{err_file}"
+            with open(log_file, "w+", encoding="utf-8") as pars:
+                json.dump(logs, pars, indent=4)
+            with open(err_file, "w+", encoding="utf-8") as errf:
+                json.dump(errors, errf, indent=4)
+        else:
+            print(f"{path} is not a directory")
+    except PermissionError:
+        print(f"{path} is not writeable.")
+        sys.exit(1)
 
 
 def log_search(error_logs):
