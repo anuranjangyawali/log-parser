@@ -85,10 +85,10 @@ def write_to_file(path, logs, errors):
         sys.exit(1)
 
 
-def log_search(error_logs):
+def log_search(error_logs, program):
     program_error_logs = []
     for logs in error_logs:
-        if logs["Program"].lower() == args.program.lower():
+        if logs["Program"].lower() == program.lower():
             program_error_logs.append(logs)
     print(json.dumps(program_error_logs, indent=4))
 
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     errors = filter_logs(logs)
 
     if args.program: 
-        log_search(errors)
+        log_search(errors, args.program)
     elif args.isset_e: 
         print_err_logs(errors)
     elif args.path: 
