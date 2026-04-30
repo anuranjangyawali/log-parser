@@ -55,6 +55,7 @@ def log_parser(source):
         sys.exit(1)
     except PermissionError:
         print(f"File `{args.source}` is not readable.")
+        sys.exit(1)
 
     return parsed_logs
 
