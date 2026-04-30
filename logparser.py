@@ -50,17 +50,20 @@ def log_parser():
                     'PID': reggy.group(4),
                     'Message': reggy.group(5)
                     })
-            error_logs = []
-            for logs in parsed_logs:
-                for k,v in logs.items():
-                    if v == None: continue
-                    if "error" in v.lower(): error_logs.append(logs)
     except FileNotFoundError:
         print(f"File `{args.source}` not found.")
         sys.exit(1)
 
-    return (parsed_logs, error_logs)
+    return parsed_logs
 
+def filter_logs():
+    parsed_logs = log_parser()
+    error_logs = []
+    for logs in parsed_logs:
+        for k,v in logs.items():
+            if v == None: continue
+            if "error" in v.lower(): error_logs.append(logs)
+    return error_logs
 
 def write_to_file(path):
     log_file = "logs.json"
@@ -70,31 +73,32 @@ def write_to_file(path):
         log_file = f"{path}/{log_file}"
         err_file = f"{path}/{err_file}"
 
-    get_logs = log_parser()
+    logs = log_parser()
+    errors = filter_logs()
     with open(log_file, "w+", encoding="utf-8") as pars:
-        json.dump(get_logs[0], pars, indent=4)
+        json.dump(logs, pars, indent=4)
     with open(err_file, "w+", encoding="utf-8") as errf:
-        json.dump(get_logs[1], errf, indent=4)
+        json.dump(errors, errf, indent=4)
 
 
 
 def log_search():
-    error_logs = log_parser()
+    error_logs = filter_logs()
     program_error_logs = []
-    for logs in error_logs[1]:
+    for logs in error_logs:
         if logs["Program"].lower() == args.program.lower():
             program_error_logs.append(logs)
     print(json.dumps(program_error_logs, indent=4))
 
 
 def print_logs():
-    get_logs = log_parser()
-    print(json.dumps(get_logs[0], indent=4))
+    logs = log_parser()
+    print(json.dumps(logs, indent=4))
 
 
 def print_err_logs():
-    get_logs = log_parser()
-    print(json.dumps(get_logs[1], indent=4))
+    logs = filter_logs()
+    print(json.dumps(logs, indent=4))
 
 
 if __name__ == "__main__":
