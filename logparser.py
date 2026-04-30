@@ -56,8 +56,7 @@ def log_parser():
 
     return parsed_logs
 
-def filter_logs():
-    parsed_logs = log_parser()
+def filter_logs(parsed_logs):
     error_logs = []
     for logs in parsed_logs:
         for k,v in logs.items():
@@ -65,7 +64,7 @@ def filter_logs():
             if "error" in v.lower(): error_logs.append(logs)
     return error_logs
 
-def write_to_file(path):
+def write_to_file(path, logs, errors):
     log_file = "logs.json"
     err_file = "errors.json"
 
@@ -73,8 +72,6 @@ def write_to_file(path):
         log_file = f"{path}/{log_file}"
         err_file = f"{path}/{err_file}"
 
-    logs = log_parser()
-    errors = filter_logs()
     with open(log_file, "w+", encoding="utf-8") as pars:
         json.dump(logs, pars, indent=4)
     with open(err_file, "w+", encoding="utf-8") as errf:
@@ -82,8 +79,7 @@ def write_to_file(path):
 
 
 
-def log_search():
-    error_logs = filter_logs()
+def log_search(error_logs):
     program_error_logs = []
     for logs in error_logs:
         if logs["Program"].lower() == args.program.lower():
@@ -96,15 +92,22 @@ def print_logs():
     print(json.dumps(logs, indent=4))
 
 
-def print_err_logs():
-    logs = filter_logs()
-    print(json.dumps(logs, indent=4))
+def print_err_logs(errors):
+    print(json.dumps(errors, indent=4))
 
 
 if __name__ == "__main__":
     args = arg_parse()
-    if args.program: log_search()
-    elif args.isset_e: print_err_logs()
-    elif args.path: write_to_file(args.path)
-    else: print_logs()
+
+    logs = log_parser()
+    errors = filter_logs(logs)
+
+    if args.program: 
+        log_search(errors)
+    elif args.isset_e: 
+        print_err_logs(errors)
+    elif args.path: 
+        write_to_file(args.path, logs, errors)
+    else: 
+        print_logs()
 
