@@ -71,7 +71,7 @@ def prog_logs(parsed_logs, program):
 
 
 def prog_errors(error_logs, program):
-    prog_error_logs = [p_e_l for p_e_l in error_logs if p_e_l["Program"].lower() == program]
+    prog_error_logs = [p_e_l for p_e_l in error_logs if p_e_l["Program"].lower() == program.lower()]
     return prog_error_logs
 
 
