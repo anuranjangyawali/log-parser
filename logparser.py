@@ -90,7 +90,7 @@ def log_search(error_logs, program):
     for logs in error_logs:
         if logs["Program"].lower() == program.lower():
             program_error_logs.append(logs)
-    print(json.dumps(program_error_logs, indent=4))
+    return program_error_logs
 
 
 def print_logs():
@@ -109,11 +109,15 @@ if __name__ == "__main__":
     errors = filter_logs(logs)
 
     if args.program: 
-        log_search(errors, args.program)
+        program_error_logs = log_search(errors, args.program)
+        print(json.dumps(program_error_logs, indent=4))
+
     elif args.isset_e: 
         print_err_logs(errors)
+
     elif args.path: 
         write_to_file(args.path, logs, errors)
+
     else: 
         print_logs()
 
